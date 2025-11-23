@@ -169,6 +169,176 @@ void tampilkanMenuReporting() {
     printf("4. Kembali ke Menu Utama\n");
     printf("Pilih: ");
 }
+void unduhDataMahasiswa() {
+    int pilihanunduhmahasiswa;
+    FILE *src;
+    char line[200];
+
+    src = fopen("mahasiswa.txt", "r"); 
+    if (!src) {
+        printf("File sumber tidak ditemukan!\n");
+        return;
+    }
+
+    printf("Pilih format unduh:\n");
+    printf("1. TXT\n");
+    printf("2. CSV\n");
+    pilihanunduhmahasiswa = inputAngka("Masukkan pilihan (1/2): ");
+
+    if (pilihanunduhmahasiswa == 1) {
+        FILE *dst = fopen("hasil_download.txt", "w");
+        if (!dst) {
+            printf("Gagal membuat file TXT!\n");
+            fclose(src);
+            return;
+        }
+
+        fprintf(dst, "+-----------+--------------------+-----+-------------+\n");
+        fprintf(dst, "|   NIM     |       Nama         | JK  |   Asal      |\n");
+        fprintf(dst, "+-----------+--------------------+-----+-------------+\n");
+
+        while (fgets(line, sizeof(line), src)) {
+            char *nim = strtok(line, ";");
+            char *nama = strtok(NULL, ";");
+            char *jk   = strtok(NULL, ";");
+            char *asal = strtok(NULL, ";\n");
+
+            fprintf(dst, "| %-9s | %-18s | %-3s | %-11s |\n",
+                    nim, nama, jk, asal);
+        }
+
+        fprintf(dst, "+-----------+--------------------+-----+-------------+\n");
+        fclose(dst);
+        printf("Data berhasil diunduh di: hasil_mahasiswa.txt\n");
+
+    } else if (pilihanunduhmahasiswa == 2) {
+        FILE *dst = fopen("mahasiswa.csv", "w");
+        if (!dst) {
+            printf("Gagal membuat file CSV!\n");
+            fclose(src);
+            return;
+        }
+
+        fprintf(dst, "NIM;Nama;JK;Asal\n");
+
+        while (fgets(line, sizeof(line), src)) {
+            char nim[20], nama[50], jk[5], asal[50];
+            if (sscanf(line, "%[^;];%[^;];%[^;];%[^\n]", nim, nama, jk, asal) == 4) {
+                fprintf(dst, "%s;%s;%s;%s\n", nim, nama, jk, asal);
+            }
+        }
+
+        fclose(dst);
+        printf("Data berhasil disimpan di: mahasiswa.csv\n");
+
+    } else {
+        printf("Pilihan tidak valid!\n");
+    }
+
+    fclose(src);
+
+    printf("Tekan ENTER untuk kembali...");
+    getchar();
+}
+void unduhDataJurusan() {
+    int pilihanunduhjurusan;
+    FILE *src;
+
+    src = fopen("jurusan.txt", "r");
+    if (!src) {
+        printf("File jurusan.txt tidak ditemukan!\n");
+        return;
+    }
+
+    printf("Pilih format unduh:\n");
+    printf("1. TXT\n");
+    printf("2. CSV\n");
+    pilihanunduhjurusan = inputAngka("Masukkan pilihan (1/2): ");
+
+    char line[200];
+
+    if (pilihanunduhjurusan == 1) {
+        FILE *dst = fopen("hasil_jurusan.txt", "w");
+        if (!dst) { fclose(src); return; }
+
+        fprintf(dst, "+------------+----------------------+\n");
+        fprintf(dst, "|   Kode     |     Nama Jurusan     |\n");
+        fprintf(dst, "+------------+----------------------+\n");
+
+        while (fgets(line, sizeof(line), src)) {
+            char *kode = strtok(line, ";");
+            char *nama = strtok(NULL, "\n");
+            fprintf(dst, "| %-10s | %-20s |\n", kode, nama);
+        }
+
+        fprintf(dst, "+------------+----------------------+\n");
+        fclose(dst);
+        printf("Data jurusan berhasil diunduh ke: hasil_jurusan.txt\n");
+
+    } else if (pilihanunduhjurusan == 2) {
+        FILE *dst = fopen("jurusan.csv", "w");
+        if (!dst) { fclose(src); return; }
+
+        fprintf(dst, "Kode;Nama Jurusan\n");
+
+        while (fgets(line, sizeof(line), src)) {
+            char *kode = strtok(line, ";");
+            char *nama = strtok(NULL, "\n");
+            fprintf(dst, "%s;%s\n", kode, nama);
+        }
+
+        fclose(dst);
+        printf("Data jurusan berhasil diunduh ke: jurusan.csv\n");
+
+    } else {
+        printf("Pilihan tidak valid!\n");
+    }
+
+    fclose(src);
+}
+#include <stdio.h>
+#include <string.h>
+
+void statistikJurusan() {
+    FILE *src = fopen("mahasiswa.txt", "r");
+    if (!src) {
+        printf("File mahasiswa.txt tidak ditemukan!\n");
+        return;
+    }
+
+    char line[200], nim[20], nama[50], jk[5], asal[50];
+    int countTI = 0, countSI = 0, countDKV = 0, countPTI = 0;
+
+    while (fgets(line, sizeof(line), src)) {
+        if (sscanf(line, "%[^;];%[^;];%[^;];%[^\n]", nim, nama, jk, asal) == 4) {
+            // ambil dua digit awal NIM
+            char kode[3];
+            strncpy(kode, nim, 2);
+            kode[2] = '\0';
+
+            // Hitung berdasarkan mapping
+            if (strcmp(kode, "67") == 0) countTI++;
+            else if (strcmp(kode, "68") == 0) countSI++;
+            else if (strcmp(kode, "69") == 0) countDKV++;
+            else if (strcmp(kode, "70") == 0) countPTI++;
+        }
+    }
+
+    fclose(src);
+
+    // Tampilkan tabel
+    printf("+----------------------+--------+\n");
+    printf("| Nama Jurusan         | Jumlah |\n");
+    printf("+----------------------+--------+\n");
+    printf("| Teknik Informatika   | %-6d |\n", countTI);
+    printf("| Sistem Informasi     | %-6d |\n", countSI);
+    printf("| DKV                  | %-6d |\n", countDKV);
+    printf("| Pendidikan TI        | %-6d |\n", countPTI);
+    printf("+----------------------+--------+\n\n");
+    printf("Tekan ENTER untuk kembali...");
+    getchar();
+}
+
 
 bool cariMahasiswaByNim(struct Mahasiswa daftar[], const char *nim) {
     for (int i = 0; i < 100; i++) {
@@ -195,7 +365,7 @@ int cariIndexMahasiswaByNim(struct Mahasiswa daftar[], const char *nim) {
 }
 
 int main() {
-    int pilihanUtama, pilihanMahasiswa, pilihanJurusan;
+    int pilihanUtama, pilihanMahasiswa, pilihanJurusan, pilihanreporting;
 
     struct Mahasiswa *data;
     int jumlahMahasiswa = 0;
@@ -605,7 +775,32 @@ int main() {
                 break;
 
             case 3://REPORTING
-                printf("Menu Report masih belom dibuat.\n");
+            do {
+                    tampilkanMenuReporting();
+                    pilihanreporting = inputAngka("");
+
+                    switch (pilihanreporting) {
+                        case 1:
+                        system("cls");
+                        statistikJurusan();
+                            break;
+                        case 2:
+                        system("cls");
+                        unduhDataMahasiswa();
+                        break;
+                        case 3:
+                        system("cls");
+                        unduhDataJurusan();
+                        break;
+                        case 4:
+                            printf("Kembali ke menu utama...\n");
+                            break;
+                    default:
+                        printf("Opsi tidak valid.\n");
+                        break;
+                    }
+
+                } while (pilihanreporting != 4);
                 break;
 
             case 4:
@@ -615,7 +810,6 @@ int main() {
             default:
                 printf("Opsi tidak valid.\n2");
                 break;
-
         }
     }while(pilihanUtama != 4);
 
